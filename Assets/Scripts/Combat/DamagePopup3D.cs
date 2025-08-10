@@ -22,13 +22,24 @@ public class DamagePopup3D : MonoBehaviour
     float time;
 
     /* ─────────────────────────── */
+
+
+
+    void Reset()
+    {
+        if (text == null) text = GetComponentInChildren<TMPro.TMP_Text>();
+    }
+
+
     void Awake()
     {
         // Auto-assign if the Inspector slot was left empty
         if (text == null) text = GetComponentInChildren<TMP_Text>(true);
+    
+     
     }
 
-    void Start()
+void Start()
     {
         if (text == null)
         {
