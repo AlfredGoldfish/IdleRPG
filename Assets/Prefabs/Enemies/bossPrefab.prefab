@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 4613072361282449472}
   - component: {fileID: 1552900048696411482}
   - component: {fileID: 5152831581319482836}
+  - component: {fileID: -4245042220183792024}
   m_Layer: 0
   m_Name: bossPrefab
   m_TagString: Untagged
@@ -191,6 +192,28 @@ MonoBehaviour:
   microJitter: {x: 0.08, y: 0}
   useLocalAxes: 1
   zOffset: -0.1
+--- !u!114 &-4245042220183792024
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8359829110995177797}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e1cc911ddb3cb4429715d0e2da1fd10, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  coinPrefab: {fileID: 1393580942716185956, guid: da7b0713c512b3444b8765a7f059ad3a, type: 3}
+  minCoins: 2
+  maxCoins: 5
+  minValue: 1
+  maxValue: 2
+  spawnRadius: 0.6
+  upwardBias: 0.25
+  impulse: 2.5
+  torque: 10
+  lifeSecondsOverride: 0
 --- !u!1 &9141606746743515586
 GameObject:
   m_ObjectHideFlags: 0

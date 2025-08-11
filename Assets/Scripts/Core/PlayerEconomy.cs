@@ -26,8 +26,8 @@ public class PlayerEconomy : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.C))
         {
-            AddCurrency(Metal.Copper, 123);
-            Debug.Log("Added 123 copper (test)");
+            AddCurrency(Metal.Copper, 1);
+            Debug.Log("Added 1 copper (test)");
         }
     }
 #endif

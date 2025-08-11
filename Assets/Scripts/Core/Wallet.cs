@@ -2,6 +2,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+
+public void ClearAll()
+{
+    // zero out your internal amounts (array/dictionary—whatever you use)
+    for (int i = 0; i < _amounts.Length; i++) _amounts[i] = 0;
+    OnChanged?.Invoke();
+}
+
 /// Tiered metals – extend whenever you add a new currency icon.
 public enum Metal
 {

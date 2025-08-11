@@ -235,3 +235,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e1cc911ddb3cb4429715d0e2da1fd10, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  coinPrefab: {fileID: 8642626500318749525, guid: 5e5d96aeeaf57b041a8b3a62a350bc74, type: 3}
+  minCoins: 2
+  maxCoins: 5
+  minValue: 1
+  maxValue: 2
+  spawnRadius: 0.6
+  upwardBias: 0.25
+  impulse: 2.5
+  torque: 10
+  lifeSecondsOverride: 0
