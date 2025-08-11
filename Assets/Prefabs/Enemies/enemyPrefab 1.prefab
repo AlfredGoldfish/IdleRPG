@@ -45,6 +45,7 @@ GameObject:
   - component: {fileID: 1726641758911838799}
   - component: {fileID: 792993141229426612}
   - component: {fileID: 3977221215977293888}
+  - component: {fileID: 392938404615638528}
   m_Layer: 0
   m_Name: enemyPrefab 1
   m_TagString: Untagged
@@ -222,3 +223,15 @@ MonoBehaviour:
   microJitter: {x: 0.08, y: 0}
   useLocalAxes: 1
   zOffset: -0.1
+--- !u!114 &392938404615638528
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6718326544104325535}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e1cc911ddb3cb4429715d0e2da1fd10, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
