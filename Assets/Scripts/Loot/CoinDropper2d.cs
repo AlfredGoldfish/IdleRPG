@@ -1,8 +1,11 @@
 using UnityEngine;
-
+using IdleRPG.Core;
+using IdleRPG.Loot;
+namespace IdleRPG.Loot;
 /// Spawns a burst of coin pickups when the attached Health2D dies.
 /// Inspector-driven: no Update, no JSON, minimal allocations.
 [RequireComponent(typeof(Health2D))]
+
 public class CoinDropper2D : MonoBehaviour
 {
     [Header("Coin Prefab")]

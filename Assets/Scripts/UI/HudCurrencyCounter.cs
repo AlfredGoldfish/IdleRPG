@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
 using TMPro;
+using IdleRPG.Core;
+
 
 public class HUDCurrencyCounter : MonoBehaviour
 {

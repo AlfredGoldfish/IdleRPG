@@ -1,4 +1,6 @@
 ﻿using UnityEngine;
+using IdleRPG.Core;
+
 
 //
 // Lives once and exposes the Wallet + helper methods.
@@ -6,6 +8,9 @@
 //
 public class PlayerEconomy : MonoBehaviour
 {
+
+    public IdleRPG.Core.Wallet WalletData => wallet;
+
     public static PlayerEconomy Instance { get; private set; }
 
     public Wallet Wallet { get; private set; } = new Wallet();
