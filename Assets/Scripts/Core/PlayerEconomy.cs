@@ -1,20 +1,20 @@
-﻿using UnityEngine;
+using UnityEngine;
 using IdleRPG.Core;
 
 //
 // Lives once and exposes the Wallet + helper methods.
-// Loads once on boot; saves on quit. Dev hotkey C adds 1 copper.
+// Saves on quit. (Loading now handled by SystemsBootstrap only.)
 //
 public class PlayerEconomy : MonoBehaviour
 {
     public static PlayerEconomy Instance { get; private set; }
 
-    // The single data model instance (POCO). Not serialized by Unity (it contains a Dictionary).
+    // The single data model instance (POCO). Not serialized by Unity.
     private readonly Wallet wallet = new Wallet();
 
     // Expose for other systems (both names to avoid refactor churn).
     public Wallet WalletData => wallet;
-    public Wallet Wallet => wallet;
+    public Wallet Wallet     => wallet;
 
     private void Awake()
     {
@@ -22,8 +22,8 @@ public class PlayerEconomy : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        // Load once at startup (Json is additive into an empty wallet).
-        WalletSave.LoadInto(wallet);
+        // IMPORTANT: Do NOT load here. SystemsBootstrap.LoadOnStart handles it once.
+        // WalletSave.LoadInto(wallet);
     }
 
 #if UNITY_EDITOR

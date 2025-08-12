@@ -1,12 +1,12 @@
 using System.IO;
 using System.Reflection;
 using UnityEngine;
-using IdleRPG.Core; // for Wallet/Metal
+using UnityEngine.SceneManagement;
+using IdleRPG.Core; // Wallet/Metal
 
 /// Centralized save/load bootstrap for the Wallet owned by PlayerEconomy.
-/// - Loads once on startup
-/// - Saves on pause/quit
-/// - Optional autosave when the wallet changes (throttled)
+/// Robust hookup: tries in Start(), on scene load, and with a short retry.
+/// Loads once per session, autosaves on change, and exposes ResetSave() for UI.
 [DefaultExecutionOrder(-200)]
 public class SystemsBootstrap : MonoBehaviour
 {
@@ -19,57 +19,80 @@ public class SystemsBootstrap : MonoBehaviour
     [Header("File")]
     [SerializeField] private string fileName = "wallet.json"; // must match WalletSave
 
-    private Wallet _wallet;         // data object resolved from PlayerEconomy
+    private Wallet _wallet;                       // data object resolved from PlayerEconomy
     private float _nextWriteTime;
+    private static bool _loadedThisSession;       // guard against duplicate loads
+    private bool _hooked;                         // whether we've successfully hooked wallet
 
     private string PathFull => Path.Combine(Application.persistentDataPath, fileName);
 
-    private void Awake()
-    {
-        var pe = PlayerEconomy.Instance;
-        if (pe == null)
-        {
-            Debug.LogWarning("[SystemsBootstrap] PlayerEconomy.Instance not found. Save/Load disabled.");
-            return;
-        }
-
-        // Try to resolve Wallet model from PlayerEconomy in a tolerant way.
-        _wallet = TryResolveWalletFromPlayerEconomy(pe);
-
-        if (_wallet == null)
-        {
-            Debug.LogWarning("[SystemsBootstrap] Could not resolve Wallet from PlayerEconomy. Save/Load disabled.");
-            return;
-        }
-
-        if (loadOnStart)
-        {
-            WalletSave.LoadInto(_wallet); // Load is additive; call ONCE at startup
-    #if UNITY_EDITOR
-            Debug.Log($"[SystemsBootstrap] Loaded wallet from {PathFull}");
-    #endif
-        }
-    }
-
     private void OnEnable()
     {
-        if (autosaveOnChange && _wallet != null)
-            _wallet.OnChanged += OnWalletChanged;
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     private void OnDisable()
     {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
         if (autosaveOnChange && _wallet != null)
             _wallet.OnChanged -= OnWalletChanged;
     }
 
+    private void Start()
+    {
+        TryHookup();
+        if (!_hooked) StartCoroutine(HookupRetryFrames(60)); // try for ~1 sec at 60fps
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (!_hooked) TryHookup();
+    }
+
+    private System.Collections.IEnumerator HookupRetryFrames(int frames)
+    {
+        for (int i = 0; i < frames && !_hooked; i++)
+        {
+            yield return null;
+            TryHookup();
+        }
+    }
+
+    private void TryHookup()
+    {
+        if (_hooked) return;
+
+        var pe = PlayerEconomy.Instance ?? Object.FindAnyObjectByType<PlayerEconomy>();
+        if (pe == null) return;
+
+        _wallet = TryResolveWalletFromPlayerEconomy(pe);
+        if (_wallet == null) return;
+
+        if (loadOnStart && !_loadedThisSession)
+        {
+            WalletSave.LoadInto(_wallet); // idempotent set semantics
+            _loadedThisSession = true;
+        }
+
+        if (autosaveOnChange)
+            _wallet.OnChanged += OnWalletChanged;
+
+        _hooked = true;
+    }
+
     private void OnApplicationPause(bool pause)
     {
-        if (pause) SaveNow();
+        if (pause) SaveNow(); // silent save on pause
     }
 
     private void OnApplicationQuit()
     {
+        if (saveOnQuit) SaveNow();
+    }
+
+    private void OnDestroy()
+    {
+        // Extra guard to persist in-editor if quit wasn't seen
         if (saveOnQuit) SaveNow();
     }
 
@@ -86,7 +109,8 @@ public class SystemsBootstrap : MonoBehaviour
         if (_wallet == null) return;
         WalletSave.Save(_wallet);
     #if UNITY_EDITOR
-        Debug.Log($"[SystemsBootstrap] Saved wallet → {PathFull}");
+        // Leave this log for manual Save Now actions; normal autosaves stay quiet.
+        // Debug.Log($"[SystemsBootstrap] Saved wallet → {PathFull}");
     #endif
     }
 

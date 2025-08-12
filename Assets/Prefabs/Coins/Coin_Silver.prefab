@@ -165,6 +165,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef9410dd8da45fa4c9b35eecd75c358b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  metal: 0
+  metal: 2
   value: 1
   lifeSeconds: 20
+  clickPickupForTests: 1

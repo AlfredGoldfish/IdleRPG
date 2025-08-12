@@ -4,36 +4,64 @@ using System.IO;
 using UnityEngine;
 using IdleRPG.Core;
 
-
-[Serializable]
-class WalletSaveDto
-{
-    public List<string> metals = new();
-    public List<ulong> amounts = new();
-}
-
+/// <summary>
+/// Minimal JSON persistence for the Wallet. Stores parallel lists for metals and amounts.
+/// LoadInto uses SET semantics (idempotent).
+/// </summary>
 public static class WalletSave
 {
-    static string PathFile => System.IO.Path.Combine(Application.persistentDataPath, "wallet.json");
-
-    public static void Save(Wallet w)
+    [Serializable]
+    private class Data
     {
-        var dto = new WalletSaveDto();
-        foreach (Metal m in Enum.GetValues(typeof(Metal)))
-        {
-            var amt = w.Get(m);
-            if (amt > 0) { dto.metals.Add(m.ToString()); dto.amounts.Add(amt); }
-        }
-        File.WriteAllText(PathFile, JsonUtility.ToJson(dto));
+        public List<string> metals = new List<string>();
+        public List<ulong>  amounts = new List<ulong>();
+        public string version = "0.2";
     }
 
-    public static void LoadInto(Wallet w)
-    {
-        if (!File.Exists(PathFile)) return;
-        var dto = JsonUtility.FromJson<WalletSaveDto>(File.ReadAllText(PathFile));
-        if (dto?.metals == null) return;
+    private static string PathFull(string fileName = "wallet.json")
+        => Path.Combine(Application.persistentDataPath, fileName);
 
-        for (int i = 0; i < dto.metals.Count; i++)
-            if (Enum.TryParse<Metal>(dto.metals[i], out var m)) w.Add(m, dto.amounts[i]);
+    public static void Save(Wallet wallet, string fileName = "wallet.json")
+    {
+        if (wallet == null) return;
+
+        var data = new Data();
+        foreach (Metal m in Enum.GetValues(typeof(Metal)))
+        {
+            ulong v = wallet.Get(m);
+            if (v == 0UL) continue;
+            data.metals.Add(m.ToString());
+            data.amounts.Add(v);
+        }
+
+        var json = JsonUtility.ToJson(data);
+        File.WriteAllText(PathFull(fileName), json);
+    #if UNITY_EDITOR
+        Debug.Log($"[WalletSave] Saved → {PathFull(fileName)}");
+    #endif
+    }
+
+    public static void LoadInto(Wallet wallet, string fileName = "wallet.json")
+    {
+        if (wallet == null) return;
+
+        string path = PathFull(fileName);
+        if (!File.Exists(path)) return;
+
+        var json = File.ReadAllText(path);
+        var data = JsonUtility.FromJson<Data>(json);
+        if (data == null || data.metals == null || data.amounts == null) return;
+
+        int count = Math.Min(data.metals.Count, data.amounts.Count);
+        for (int i = 0; i < count; i++)
+        {
+            if (Enum.TryParse<Metal>(data.metals[i], out var m))
+            {
+                wallet.Set(m, data.amounts[i]);
+            }
+        }
+    #if UNITY_EDITOR
+        Debug.Log($"[WalletSave] Loaded ← {path} (set semantics)");
+    #endif
     }
 }
