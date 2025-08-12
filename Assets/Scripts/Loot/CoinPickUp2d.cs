@@ -30,12 +30,11 @@ namespace IdleRPG.Loot
             col = GetComponent<Collider2D>();
             sr = GetComponent<SpriteRenderer>();
 
-            // Recommended coin RB settings (ok to tune in prefab)
             if (rb != null)
             {
                 rb.gravityScale = 0f;
                 rb.interpolation = RigidbodyInterpolation2D.Interpolate;
-                if (rb.drag < 0.1f) rb.drag = 1.0f;
+                if (rb.linearDamping < 0.1f) rb.linearDamping = 1.0f;
             }
             if (col != null) col.isTrigger = true;
         }
@@ -54,14 +53,12 @@ namespace IdleRPG.Loot
         {
             if (collected) return;
 
-            // Primary path: your child trigger tagged "Collector"
             if (other.CompareTag("Collector"))
             {
                 Collect();
                 return;
             }
 
-            // Fallback: anything under a Player root with PlayerEconomy
             if (other.GetComponentInParent<PlayerEconomy>() != null)
             {
                 Collect();
@@ -90,7 +87,6 @@ namespace IdleRPG.Loot
                 pe.AddCurrency(metal, amt);
             }
 
-            // Hide immediately for snappy feel
             if (col) col.enabled = false;
             if (sr) sr.enabled = false;
 

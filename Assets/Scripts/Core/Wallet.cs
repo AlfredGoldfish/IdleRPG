@@ -1,30 +1,45 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace IdleRPG.Core
 {
-    /// Tiered metals – extend whenever you add a new currency icon.
+    /// Metals/currencies you support. Extend as needed.
     public enum Metal
     {
         Copper, Bronze, Silver, Gold, Platinum, Mithril
     }
 
-    /// Holds an unlimited stack for each metal and raises an event on change.
+    /// Plain data model for your currency balances.
+    /// Not a MonoBehaviour on purpose (simple, testable).
     [Serializable]
     public class Wallet
     {
-        readonly Dictionary<Metal, ulong> balance = new();
+        private readonly Dictionary<Metal, ulong> balance = new();
 
-        public ulong Get(Metal metal) => balance.TryGetValue(metal, out var v) ? v : 0UL;
+        /// Event: fired whenever a metal's total changes.
+        /// Args: (metal, newTotal)
+        public event Action<Metal, ulong> OnChanged;
+
+        public ulong Get(Metal metal)
+            => balance.TryGetValue(metal, out var v) ? v : 0UL;
 
         public void Add(Metal metal, ulong amount)
         {
-            if (amount == 0) return;
-            balance[metal] = Get(metal) + amount;
-            OnChanged?.Invoke(metal, balance[metal]);
+            if (amount == 0UL) return;
+            var newTotal = Get(metal) + amount;
+            balance[metal] = newTotal;
+            OnChanged?.Invoke(metal, newTotal);
         }
 
+        /// Set an exact amount (used by loads/tools).
+        public void Set(Metal metal, ulong amount)
+        {
+            if (amount == 0UL) balance.Remove(metal);
+            else balance[metal] = amount;
+            OnChanged?.Invoke(metal, Get(metal));
+        }
+
+        /// Clear all balances to zero and notify listeners.
         public void ClearAll()
         {
             foreach (Metal m in Enum.GetValues(typeof(Metal)))
@@ -34,16 +49,5 @@ namespace IdleRPG.Core
             }
             balance.Clear();
         }
-
-        // Optional: precise setter for loads/tools
-        public void Set(Metal metal, ulong amount)
-        {
-            if (amount == 0UL) balance.Remove(metal);
-            else balance[metal] = amount;
-            OnChanged?.Invoke(metal, Get(metal));
-        }
-
-        /// metal → new total
-        public event Action<Metal, ulong> OnChanged;
     }
 }

@@ -1,7 +1,5 @@
 using UnityEngine;
-// If Health2D lives in a namespace (e.g., IdleRPG.Combat), add its using:
-// using IdleRPG.Combat;
-using IdleRPG.Core; // if you reference Metal here later
+// using IdleRPG.Combat; // add if your Health2D lives in a different namespace
 
 namespace IdleRPG.Loot
 {
@@ -63,28 +61,24 @@ namespace IdleRPG.Loot
         {
             if (!coinPrefab) return;
 
-            // Clamp ranges defensively
             int count = Random.Range(Mathf.Min(minCoins, maxCoins), Mathf.Max(minCoins, maxCoins) + 1);
-            int vmin = Mathf.Min(minValue, maxValue);
-            int vmax = Mathf.Max(minValue, maxValue);
+            int vmin  = Mathf.Min(minValue, maxValue);
+            int vmax  = Mathf.Max(minValue, maxValue);
 
             var origin = transform.position;
 
             for (int i = 0; i < count; i++)
             {
-                // Random point inside a circle on XY plane
                 Vector2 offset2D = Random.insideUnitCircle * spawnRadius;
                 Vector3 spawnPos = origin + new Vector3(offset2D.x, offset2D.y, 0f);
 
-                // Spawn coin
                 var coin = Instantiate(coinPrefab, spawnPos, Quaternion.identity);
                 int value = Random.Range(vmin, vmax + 1);
-                coin.Initialize(coin.metal, value); // keep metal from prefab; override value
+                coin.Initialize(coin.metal, value);
 
                 if (lifeSecondsOverride > 0f)
                     coin.lifeSeconds = lifeSecondsOverride;
 
-                // Physics burst: random direction + upward bias
                 var rb = coin.GetComponent<Rigidbody2D>();
                 if (rb)
                 {
@@ -106,12 +100,12 @@ namespace IdleRPG.Loot
             }
         }
 
-#if UNITY_EDITOR
+    #if UNITY_EDITOR
         private void OnDrawGizmosSelected()
         {
             Gizmos.color = new Color(1f, 0.85f, 0.2f, 0.35f);
             Gizmos.DrawWireSphere(transform.position, spawnRadius);
         }
-#endif
+    #endif
     }
 }
