@@ -1,33 +1,33 @@
 ﻿using UnityEngine;
 using IdleRPG.Core;
 
-
 //
 // Lives once and exposes the Wallet + helper methods.
-// This version includes tiny hooks to load/save the wallet as JSON.
+// Loads once on boot; saves on quit. Dev hotkey C adds 1 copper.
 //
 public class PlayerEconomy : MonoBehaviour
 {
-
-    public IdleRPG.Core.Wallet WalletData => wallet;
-
     public static PlayerEconomy Instance { get; private set; }
 
-    public Wallet Wallet { get; private set; } = new Wallet();
+    // The single data model instance (POCO). Not serialized by Unity (it contains a Dictionary).
+    private readonly Wallet wallet = new Wallet();
 
-    void Awake()
+    // Expose for other systems (both names to avoid refactor churn).
+    public Wallet WalletData => wallet;
+    public Wallet Wallet => wallet;
+
+    private void Awake()
     {
         if (Instance && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        // Optional: load wallet on boot if file exists
-        WalletSave.LoadInto(Wallet);
+        // Load once at startup (Json is additive into an empty wallet).
+        WalletSave.LoadInto(wallet);
     }
 
 #if UNITY_EDITOR
-    // Debug hotkey: add 123 copper
-    void Update()
+    private void Update()
     {
         if (Input.GetKeyDown(KeyCode.C))
         {
@@ -37,12 +37,12 @@ public class PlayerEconomy : MonoBehaviour
     }
 #endif
 
-    void OnApplicationQuit()
+    private void OnApplicationQuit()
     {
-        // Optional: persist wallet to JSON on quit
-        WalletSave.Save(Wallet);
+        // Persist on exit
+        WalletSave.Save(wallet);
     }
 
-    // Convenience helper for other systems (enemies, chests, quests)
-    public void AddCurrency(Metal metal, ulong amount) => Wallet.Add(metal, amount);
+    // Convenience for coins/chests/quests/etc.
+    public void AddCurrency(Metal metal, ulong amount) => wallet.Add(metal, amount);
 }
