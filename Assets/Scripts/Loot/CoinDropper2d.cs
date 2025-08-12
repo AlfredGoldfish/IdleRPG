@@ -1,5 +1,6 @@
 using UnityEngine;
 // using IdleRPG.Combat; // add if your Health2D lives in a different namespace
+using IdleRPG.Core;
 
 namespace IdleRPG.Loot
 {
@@ -12,11 +13,11 @@ namespace IdleRPG.Loot
         [Tooltip("A prefab that has CoinPickup2D + Rigidbody2D + Collider2D(isTrigger).")]
         [SerializeField] private CoinPickup2D coinPrefab;
 
-        [Header("How many coins?")]
+        [Header("How many coins? (local fallback)")]
         [Min(0)] public int minCoins = 2;
         [Min(0)] public int maxCoins = 5;
 
-        [Header("Value per coin")]
+        [Header("Value per coin (local fallback)")]
         [Min(0)] public int minValue = 1;
         [Min(0)] public int maxValue = 2;
 
@@ -37,6 +38,13 @@ namespace IdleRPG.Loot
         [Header("Lifetime")]
         [Tooltip("Override CoinPickup2D.lifeSeconds? 0 = use prefab's value.")]
         [Min(0f)] public float lifeSecondsOverride = 0f;
+
+        [Header("Formula (optional)")]
+        [Tooltip("If assigned, overrides local min/max with evaluated stage & tier.")]
+        public LootFormula formula;
+        public bool useFormula = true;
+        public EnemyTier tier = EnemyTier.Trash;
+        [Min(1)] public int stage = 1;
 
         private Health2D health;
 
@@ -61,9 +69,19 @@ namespace IdleRPG.Loot
         {
             if (!coinPrefab) return;
 
-            int count = Random.Range(Mathf.Min(minCoins, maxCoins), Mathf.Max(minCoins, maxCoins) + 1);
-            int vmin  = Mathf.Min(minValue, maxValue);
-            int vmax  = Mathf.Max(minValue, maxValue);
+            // Decide ranges: formula or local
+            int cMin = minCoins, cMax = maxCoins, vMin = minValue, vMax = maxValue;
+            if (useFormula && formula != null)
+            {
+                var roll = formula.Evaluate(stage, tier);
+                cMin = roll.minCoins; cMax = roll.maxCoins;
+                vMin = roll.minValue; vMax = roll.maxValue;
+            }
+
+            // Clamp ranges defensively
+            int count = Random.Range(Mathf.Min(cMin, cMax), Mathf.Max(cMin, cMax) + 1);
+            int vmin  = Mathf.Min(vMin, vMax);
+            int vmax  = Mathf.Max(vMin, vMax);
 
             var origin = transform.position;
 
@@ -72,7 +90,7 @@ namespace IdleRPG.Loot
                 Vector2 offset2D = Random.insideUnitCircle * spawnRadius;
                 Vector3 spawnPos = origin + new Vector3(offset2D.x, offset2D.y, 0f);
 
-                var coin = Instantiate(coinPrefab, spawnPos, Quaternion.identity);
+                var coin = Object.Instantiate(coinPrefab, spawnPos, Quaternion.identity);
                 int value = Random.Range(vmin, vmax + 1);
                 coin.Initialize(coin.metal, value);
 
