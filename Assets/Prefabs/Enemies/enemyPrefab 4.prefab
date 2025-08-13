@@ -47,7 +47,7 @@ GameObject:
   - component: {fileID: 3977221215977293888}
   - component: {fileID: 6276059444038144678}
   m_Layer: 0
-  m_Name: enemyPrefab 3
+  m_Name: enemyPrefab 4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -113,7 +113,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 1
-  m_Sprite: {fileID: -850815665622854500, guid: 3ff14bea36e7e274cbf90b6750d46847, type: 3}
+  m_Sprite: {fileID: -6659300024981973931, guid: 1f2cb9511321ead4394b52bdfa8a965f, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -158,17 +158,17 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0.13329506, y: 0.12073088}
+  m_Offset: {x: -0.22209048, y: 0.069962025}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 10.22, y: 14.8}
+    oldSize: {x: 8.66, y: 9.62}
     newSize: {x: 10.2, y: 10.19}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 8.616867, y: 14.933761}
+  m_Size: {x: 9.327639, y: 10.567597}
   m_EdgeRadius: 0
 --- !u!114 &1726641758911838799
 MonoBehaviour:
