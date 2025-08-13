@@ -214,6 +214,10 @@ MonoBehaviour:
   impulse: 2.5
   torque: 10
   lifeSecondsOverride: 0
+  formula: {fileID: 0}
+  useFormula: 1
+  tier: 2
+  stage: 1
 --- !u!1 &9141606746743515586
 GameObject:
   m_ObjectHideFlags: 0
