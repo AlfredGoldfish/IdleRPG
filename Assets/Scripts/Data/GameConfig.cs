@@ -5,10 +5,10 @@ using UnityEngine;
 public class GameConfig : ScriptableObject
 {
     [Header("All Currencies")]
-    public List<CurrencyDef> currencies = new List<CurrencyDef>(); // public for compatibility
+    [SerializeField] private List<CurrencyDef> currencies = new List<CurrencyDef>();
 
     [Header("Default Currency")]
-    public CurrencyDef defaultCurrency;
+    public CurrencyDef defaultCurrency; // added for compatibility
 
     public IReadOnlyList<CurrencyDef> Currencies => currencies;
 
