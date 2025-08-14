@@ -1,76 +1,40 @@
-using System.Collections;
 using UnityEngine;
 
 namespace IdleRPG.Core
 {
-    [DefaultExecutionOrder(-200)]
+    /// <summary>
+    /// Guarantees PlayerEconomy exists and can later be expanded to wire save/load and other singletons.
+    /// </summary>
     public class SystemsBootstrap : MonoBehaviour
     {
-        [Header("Behavior")]
-        [SerializeField] private bool loadOnStart = true;
-        [SerializeField] private bool saveOnQuit = true;
-        [SerializeField] private bool autosaveOnChange = true;
-        [SerializeField] private float autosaveCooldown = 0.5f;
+        [Tooltip("When true, marks PlayerEconomy as DontDestroyOnLoad")]
+        public bool persistAcrossScenes = true;
 
-        [Header("File")]
-        [SerializeField] private string fileName = "wallet.json";
-
-        private EconomyService _eco;
-        private float _nextWriteTime;
-        private bool _hooked;
-
-        private void Start() => StartCoroutine(TryHookupRoutine());
-
-        private IEnumerator TryHookupRoutine()
+        private void Start()
         {
-            for (int i = 0; i < 60 && !_hooked; i++)
+            var pe = PlayerEconomy.EnsureExists();
+            if (persistAcrossScenes)
             {
-                TryHookup();
-                if (_hooked) break;
-                yield return null;
+                // Already set in Awake, but harmless to repeat
+                DontDestroyOnLoad(pe.gameObject);
             }
+
+            // Hook wallet changed here later for autosave if/when WalletSave exists.
+            // Example (guarded): WalletSave.TryAutoHook(pe.Wallet);
         }
 
-        private void TryHookup()
+#if UNITY_EDITOR
+        [ContextMenu("Log Wallet Totals")]
+        private void LogTotals()
         {
-            if (_hooked) return;
-            _eco = EconomyService.Instance ?? Object.FindAnyObjectByType<EconomyService>();
-            if (_eco == null) return;
-
-            if (loadOnStart) SaveManager.LoadInto(_eco.Wallet, fileName);
-            if (autosaveOnChange) _eco.Wallet.OnChanged += OnWalletChanged;
-            _hooked = true;
+            var pe = PlayerEconomy.EnsureExists();
+            // Basic log for quick sanity checks; replace with your metals as needed.
+            long copper = pe.Wallet.Get((Metal)0);
+            long silver = pe.Wallet.Get((Metal)1);
+            long gold   = pe.Wallet.Get((Metal)2);
+            long plat   = pe.Wallet.Get((Metal)3);
+            Debug.Log($"Wallet — Cu:{copper} Ag:{silver} Au:{gold} Pt:{plat}");
         }
-
-        private void OnDisable()
-        {
-            if (_hooked && autosaveOnChange && _eco != null)
-                _eco.Wallet.OnChanged -= OnWalletChanged;
-        }
-
-        private void OnApplicationPause(bool pause) { if (pause) SaveNow(); }
-        private void OnApplicationQuit() { if (saveOnQuit) SaveNow(); }
-        private void OnDestroy() { if (saveOnQuit) SaveNow(); }
-
-        private void OnWalletChanged(string _, ulong __)
-        {
-            if (Time.unscaledTime < _nextWriteTime) return;
-            _nextWriteTime = Time.unscaledTime + autosaveCooldown;
-            SaveNow();
-        }
-
-        [ContextMenu("Save Now")]
-        public void SaveNow()
-        {
-            if (_eco == null) return;
-            SaveManager.Save(_eco.Wallet, fileName);
-        }
-
-        [ContextMenu("Reset Save")]
-        public void ResetSave()
-        {
-            if (_eco == null) return;
-            SaveManager.ResetAndSave(_eco.Wallet, fileName);
-        }
+#endif
     }
 }
