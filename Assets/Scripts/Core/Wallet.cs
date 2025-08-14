@@ -10,13 +10,8 @@ namespace IdleRPG.Core
         public event Action<string, ulong> OnChanged;
         public event Action<Metal, ulong> OnChangedMetal;
 
-        public ulong Get(string id)
-        {
-            return _totals.TryGetValue(id, out var v) ? v : 0UL;
-        }
-
-        public ulong Get(CurrencyDef def) => Get(def.Id);
-
+        public ulong Get(string id) => _totals.TryGetValue(id, out var v) ? v : 0UL;
+        public ulong Get(CurrencyDef def) => Get(def.id);
         public ulong Get(Metal metal) => Get(metal.ToString().ToLower());
 
         public void Set(string id, ulong total)
@@ -25,7 +20,7 @@ namespace IdleRPG.Core
             OnChanged?.Invoke(id, total);
         }
 
-        public void Set(CurrencyDef def, ulong total) => Set(def.Id, total);
+        public void Set(CurrencyDef def, ulong total) => Set(def.id, total);
 
         public void Set(Metal metal, ulong total)
         {
@@ -40,12 +35,26 @@ namespace IdleRPG.Core
             OnChanged?.Invoke(id, now);
         }
 
-        public void Add(CurrencyDef def, ulong delta) => Add(def.Id, delta);
+        public void Add(CurrencyDef def, ulong delta) => Add(def.id, delta);
 
         public void Add(Metal metal, ulong delta)
         {
             Add(metal.ToString().ToLower(), delta);
             OnChangedMetal?.Invoke(metal, Get(metal));
+        }
+
+        // Added Enumerate method
+        public IEnumerable<KeyValuePair<string, ulong>> Enumerate()
+        {
+            foreach (var kvp in _totals)
+                yield return kvp;
+        }
+
+        // Added ClearAll method
+        public void ClearAll()
+        {
+            _totals.Clear();
+            OnChanged?.Invoke(string.Empty, 0UL);
         }
     }
 }
