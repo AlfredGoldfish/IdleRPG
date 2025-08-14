@@ -1,21 +1,129 @@
 using UnityEngine;
+// using IdleRPG.Combat; // add if your Health2D lives in a different namespace
+using IdleRPG.Core;
 
-public class CoinDropper2D : MonoBehaviour
+namespace IdleRPG.Loot
 {
-    public GameObject coinPrefab;
-    public Metal dropMetal;
-    public int dropAmount = 1;
-
-    public void DropCoin()
+    /// Spawns a burst of coin pickups when the attached Health2D dies.
+    /// Inspector-driven: no Update, no JSON, minimal allocations.
+    [RequireComponent(typeof(Health2D))]
+    public class CoinDropper2D : MonoBehaviour
     {
-        if (coinPrefab != null)
+        [Header("Coin Prefab")]
+        [Tooltip("A prefab that has CoinPickup2D + Rigidbody2D + Collider2D(isTrigger).")]
+        [SerializeField] private CoinPickup2D coinPrefab;
+
+        [Header("How many coins? (local fallback)")]
+        [Min(0)] public int minCoins = 2;
+        [Min(0)] public int maxCoins = 5;
+
+        [Header("Value per coin (local fallback)")]
+        [Min(0)] public int minValue = 1;
+        [Min(0)] public int maxValue = 2;
+
+        [Header("Spawn placement")]
+        [Tooltip("Coins spawn inside this radius around the enemy (world units).")]
+        [Min(0f)] public float spawnRadius = 0.6f;
+
+        [Tooltip("Extra upward nudge added to the random direction (helps side-view).")]
+        [Range(0f, 1f)] public float upwardBias = 0.25f;
+
+        [Header("Burst physics")]
+        [Tooltip("Impulse force applied to each coin (world units per second).")]
+        [Min(0f)] public float impulse = 2.5f;
+
+        [Tooltip("Random torque magnitude applied to each coin.")]
+        [Min(0f)] public float torque = 10f;
+
+        [Header("Lifetime")]
+        [Tooltip("Override CoinPickup2D.lifeSeconds? 0 = use prefab's value.")]
+        [Min(0f)] public float lifeSecondsOverride = 0f;
+
+        [Header("Formula (optional)")]
+        [Tooltip("If assigned, overrides local min/max with evaluated stage & tier.")]
+        public LootFormula formula;
+        public bool useFormula = true;
+        public EnemyTier tier = EnemyTier.Trash;
+        [Min(1)] public int stage = 1;
+
+        private Health2D health;
+
+        private void Awake()
         {
-            var coinObj = Instantiate(coinPrefab, transform.position, Quaternion.identity);
-            var pickup = coinObj.GetComponent<CoinPickup2D>();
-            if (pickup != null)
+            health = GetComponent<Health2D>();
+            if (!coinPrefab)
+                Debug.LogWarning($"[{name}] CoinDropper2D: coinPrefab not assigned.");
+        }
+
+        private void OnEnable()
+        {
+            if (health != null) health.OnDied += HandleDeath;
+        }
+
+        private void OnDisable()
+        {
+            if (health != null) health.OnDied -= HandleDeath;
+        }
+
+        private void HandleDeath()
+        {
+            if (!coinPrefab) return;
+
+            // Decide ranges: formula or local
+            int cMin = minCoins, cMax = maxCoins, vMin = minValue, vMax = maxValue;
+            if (useFormula && formula != null)
             {
-                pickup.Initialize(dropMetal, (ulong)dropAmount); // cast int to ulong
+                var roll = formula.Evaluate(stage, tier);
+                cMin = roll.minCoins; cMax = roll.maxCoins;
+                vMin = roll.minValue; vMax = roll.maxValue;
+            }
+
+            // Clamp ranges defensively
+            int count = Random.Range(Mathf.Min(cMin, cMax), Mathf.Max(cMin, cMax) + 1);
+            int vmin  = Mathf.Min(vMin, vMax);
+            int vmax  = Mathf.Max(vMin, vMax);
+
+            var origin = transform.position;
+
+            for (int i = 0; i < count; i++)
+            {
+                Vector2 offset2D = Random.insideUnitCircle * spawnRadius;
+                Vector3 spawnPos = origin + new Vector3(offset2D.x, offset2D.y, 0f);
+
+                var coin = Object.Instantiate(coinPrefab, spawnPos, Quaternion.identity);
+                int value = Random.Range(vmin, vmax + 1);
+                coin.Initialize(coin.metal, value);
+
+                if (lifeSecondsOverride > 0f)
+                    coin.lifeSeconds = lifeSecondsOverride;
+
+                var rb = coin.GetComponent<Rigidbody2D>();
+                if (rb)
+                {
+                    Vector2 dir = offset2D.normalized;
+                    dir = (dir + Vector2.up * upwardBias).normalized;
+
+                    rb.AddForce(dir * impulse, ForceMode2D.Impulse);
+
+                    if (torque > 0f)
+                    {
+                        float t = Random.Range(-torque, torque);
+                        rb.AddTorque(t, ForceMode2D.Impulse);
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning($"[{name}] CoinDropper2D: spawned coin has no Rigidbody2D.");
+                }
             }
         }
+
+    #if UNITY_EDITOR
+        private void OnDrawGizmosSelected()
+        {
+            Gizmos.color = new Color(1f, 0.85f, 0.2f, 0.35f);
+            Gizmos.DrawWireSphere(transform.position, spawnRadius);
+        }
+    #endif
     }
 }
