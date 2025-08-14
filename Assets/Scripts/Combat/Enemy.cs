@@ -21,7 +21,7 @@ public class Enemy : MonoBehaviour
     [SerializeField] int clickDamage = 1;      // amount dealt when you click
 
     [Header("Identification / Spawner hook")]
-    [SerializeField] string enemyId = "Slime";  // kept for future use (e.g., Codex)
+   // [SerializeField] string enemyId = "Slime";  // kept for future use (e.g., Codex)
     public string displayName = "Slime";
     [HideInInspector] public EnemySpawner spawner;
 
