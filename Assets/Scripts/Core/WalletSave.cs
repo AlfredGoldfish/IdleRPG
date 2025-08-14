@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using IdleRPG.Core;
 
 /// <summary>
-/// Minimal JSON save/load for Wallet data. Global namespace for drop-in compatibility.
-/// File: {persistentDataPath}/wallet.json
+/// Minimal JSON persistence for Wallet (string key + ulong amount).
 /// </summary>
 public static class WalletSave
 {
@@ -22,43 +22,56 @@ public static class WalletSave
         public List<Entry> entries = new List<Entry>();
     }
 
-    public static string FilePath =>
-        Path.Combine(Application.persistentDataPath, "wallet.json");
+    private static string FilePath => Path.Combine(Application.persistentDataPath, "wallet.json");
 
-    public static void Save(IdleRPG.Core.Wallet wallet)
+    public static void Save(Wallet wallet)
     {
+        if (wallet == null) return;
         var data = new Data();
-        foreach (var name in Enum.GetNames(typeof(Metal)))
+        foreach (var kv in wallet.Enumerate())
         {
-            var val = wallet.Get(name);
-            if (val > 0)
-            {
-                data.entries.Add(new Entry { metal = name, amount = (ulong)val });
-            }
+            data.entries.Add(new Entry { metal = kv.Key, amount = kv.Value });
         }
         var json = JsonUtility.ToJson(data, prettyPrint: true);
         File.WriteAllText(FilePath, json);
 #if UNITY_EDITOR
-        Debug.Log($"WalletSave: wrote {data.entries.Count} entries to {FilePath}");
+        Debug.Log($"[WalletSave] Saved {data.entries.Count} entries to {FilePath}");
 #endif
     }
 
     public static bool TryLoad(out Data data)
     {
-        data = new Data();
+        data = null;
+        if (!File.Exists(FilePath)) return false;
         try
         {
-            if (!File.Exists(FilePath)) return false;
             var json = File.ReadAllText(FilePath);
-            var loaded = JsonUtility.FromJson<Data>(json);
-            if (loaded != null && loaded.entries != null) data = loaded;
+            data = JsonUtility.FromJson<Data>(json);
+            if (data == null) data = new Data();
             return true;
         }
         catch (Exception e)
         {
-            Debug.LogWarning($"WalletSave: load failed: {e}");
+            Debug.LogWarning($"[WalletSave] Load failed: {e.Message}");
+            data = new Data();
             return false;
         }
+    }
+
+    public static void LoadInto(Wallet wallet)
+    {
+        if (wallet == null) return;
+        if (TryLoad(out var data) && data != null)
+        {
+            foreach (var e in data.entries)
+            {
+                if (string.IsNullOrWhiteSpace(e.metal)) continue;
+                wallet.Set(e.metal, e.amount);
+            }
+        }
+#if UNITY_EDITOR
+        Debug.Log("[WalletSave] LoadInto complete.");
+#endif
     }
 
     public static void Clear()
@@ -67,12 +80,12 @@ public static class WalletSave
         {
             if (File.Exists(FilePath)) File.Delete(FilePath);
 #if UNITY_EDITOR
-            Debug.Log("WalletSave: cleared file");
+            Debug.Log("[WalletSave] Cleared file.");
 #endif
         }
         catch (Exception e)
         {
-            Debug.LogWarning($"WalletSave: clear failed: {e}");
+            Debug.LogWarning($"[WalletSave] Clear failed: {e.Message}");
         }
     }
 }

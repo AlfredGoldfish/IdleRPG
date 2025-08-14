@@ -1,13 +1,10 @@
 using UnityEngine;
-using System;
+using IdleRPG.Core;
 
-// Global namespace on purpose to match existing references without needing 'using' edits.
 public class PlayerEconomy : MonoBehaviour
 {
     public static PlayerEconomy Instance { get; private set; }
-
-    // Wallet host
-    public IdleRPG.Core.Wallet Wallet { get; private set; }
+    public Wallet Wallet { get; private set; }
 
     private void Awake()
     {
@@ -18,20 +15,18 @@ public class PlayerEconomy : MonoBehaviour
         }
         Instance = this;
         DontDestroyOnLoad(gameObject);
-
-        // Initialize wallet if needed
-        Wallet ??= new IdleRPG.Core.Wallet();
+        if (Wallet == null) Wallet = new Wallet();
     }
 
-    /// <summary>
-    /// Ensure there's a PlayerEconomy in the scene. Creates one on demand if missing.
-    /// </summary>
-    public static PlayerEconomy EnsureExists()
+    public static void EnsureExists()
     {
-        if (Instance != null) return Instance;
-
-        var host = new GameObject("_PlayerEconomy");
-        var pe = host.AddComponent<PlayerEconomy>();
-        return pe;
+        if (Instance != null) return;
+        var go = new GameObject("_PlayerEconomy");
+        var pe = go.AddComponent<PlayerEconomy>();
+        // Awake will initialize Wallet and DontDestroyOnLoad
     }
+
+    // Convenience helpers expected by project code
+    public void AddCurrency(Metal metal, ulong delta) => Wallet?.Add(metal, delta);
+    public void AddCurrency(string metalKey, ulong delta) => Wallet?.Add(metalKey, delta);
 }
