@@ -4,40 +4,41 @@ using IdleRPG.Core;
 
 public class HUDCurrencyCounterSession : MonoBehaviour
 {
-    [Header("Target Metal")]
-    public Metal metal = Metal.Copper;
-
-    [Header("UI")]
     [SerializeField] private Text label;
-
-    private void Awake()
-    {
-        if (label == null) label = GetComponentInChildren<Text>();
-    }
+    [SerializeField] private Metal metal; // for backward compatibility
+    [SerializeField] private CurrencyDef currencyDef; // new SO reference
 
     private void OnEnable()
     {
-        var pe = PlayerEconomy.EnsureExists();
-        if (pe?.Wallet != null)
+        if (PlayerEconomy.Instance != null && PlayerEconomy.Instance.Wallet != null)
         {
-            // subscribe to string,ulong event
-            pe.Wallet.OnChanged += HandleWalletChanged;
-            // prime the label
-            HandleWalletChanged(metal.ToString(), pe.Wallet.Get(metal));
+            PlayerEconomy.Instance.Wallet.OnChanged += OnWalletChanged;
+            PlayerEconomy.Instance.Wallet.OnChangedMetal += OnWalletChanged;
         }
     }
 
     private void OnDisable()
     {
-        if (PlayerEconomy.Instance?.Wallet != null)
+        if (PlayerEconomy.Instance != null && PlayerEconomy.Instance.Wallet != null)
         {
-            PlayerEconomy.Instance.Wallet.OnChanged -= HandleWalletChanged;
+            PlayerEconomy.Instance.Wallet.OnChanged -= OnWalletChanged;
+            PlayerEconomy.Instance.Wallet.OnChangedMetal -= OnWalletChanged;
         }
     }
 
-    private void HandleWalletChanged(string metalKey, ulong total)
+    private void OnWalletChanged(string id, ulong total)
     {
-        if (!string.Equals(metalKey, metal.ToString(), System.StringComparison.OrdinalIgnoreCase)) return;
-        if (label != null) label.text = total.ToString();
+        if (currencyDef != null && id == currencyDef.Id)
+        {
+            label.text = total.ToString();
+        }
+    }
+
+    private void OnWalletChanged(Metal m, ulong total)
+    {
+        if (m == metal)
+        {
+            label.text = total.ToString();
+        }
     }
 }
