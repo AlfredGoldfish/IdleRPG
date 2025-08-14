@@ -4,26 +4,39 @@ using UnityEngine;
 namespace IdleRPG.Core
 {
     /// <summary>
-    /// Scene-facing wrapper that owns the single Wallet instance.
-    /// Keeps Wallet as a plain class; exposes pass-through API + event.
+    /// Bridges Wallet events to the rest of the game. Subscribes to (string, ulong) variant.
     /// </summary>
     public class WalletService : MonoBehaviour
     {
-        [SerializeField] private Wallet wallet = new Wallet();   // POCO instance
+        public static WalletService Instance { get; private set; }
 
-        public Wallet Data => wallet;
+        public event Action<string, ulong> OnWalletChanged;
 
-        // Event passthrough
-        public event Action<Metal, ulong> OnChanged
+        private void Awake()
         {
-            add { wallet.OnChanged += value; }
-            remove { wallet.OnChanged -= value; }
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+
+            var pe = PlayerEconomy.EnsureExists();
+            pe.Wallet.OnChanged += HandleWalletChanged;
         }
 
-        // Convenience passthroughs
-        public ulong Get(Metal m) => wallet.Get(m);
-        public void Add(Metal m, ulong amt) => wallet.Add(m, amt);
-        public void Set(Metal m, ulong amt) => wallet.Set(m, amt);
-        public void ClearAll() => wallet.ClearAll();
+        private void OnDestroy()
+        {
+            if (PlayerEconomy.Instance != null && PlayerEconomy.Instance.Wallet != null)
+            {
+                PlayerEconomy.Instance.Wallet.OnChanged -= HandleWalletChanged;
+            }
+        }
+
+        private void HandleWalletChanged(string metalKey, ulong total)
+        {
+            OnWalletChanged?.Invoke(metalKey, total);
+        }
     }
 }
