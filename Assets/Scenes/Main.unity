@@ -1483,6 +1483,7 @@ MonoBehaviour:
   - {fileID: 6718326544104325535, guid: b8a4e831684183a4083765cd47d610b7, type: 3}
   - {fileID: 6718326544104325535, guid: 25d29c2ae1ac65043a5938b0e6eac1b2, type: 3}
   - {fileID: 6718326544104325535, guid: 2b8ba94a3bb1d96488e04ff22dd84a46, type: 3}
+  - {fileID: 6718326544104325535, guid: 909f7b2b7a6eb0b449c0f9ae43d162b6, type: 3}
   bossPrefab: {fileID: 8359829110995177797, guid: 7b1b2fede8d968a4d872a690538ee899, type: 3}
   spawnPoint: {fileID: 1028596251}
   spawnOffset: {x: 0, y: 0}
