@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
-using IdleRPG.Core; // Added to access PlayerEconomy
+using IdleRPG.Core; // access PlayerEconomy
 
 public class HudCurrencyCounter : MonoBehaviour
 {
@@ -11,9 +11,8 @@ public class HudCurrencyCounter : MonoBehaviour
     {
         if (PlayerEconomy.Instance != null && PlayerEconomy.Instance.Wallet != null)
         {
-            // Subscribe to new string/ulong event
+            // Subscribe to both events for compatibility
             PlayerEconomy.Instance.Wallet.OnChanged += OnWalletChanged;
-            // Optional: subscribe to Metal/long if needed
             PlayerEconomy.Instance.Wallet.OnChangedMetal += OnWalletChanged;
         }
     }
@@ -27,7 +26,7 @@ public class HudCurrencyCounter : MonoBehaviour
         }
     }
 
-    // New signature for Wallet.OnChanged
+    // New signature for Wallet.OnChanged (string, ulong)
     private void OnWalletChanged(string metalKey, ulong total)
     {
         if (metalKey.Equals(metal.ToString(), System.StringComparison.OrdinalIgnoreCase))
@@ -36,8 +35,8 @@ public class HudCurrencyCounter : MonoBehaviour
         }
     }
 
-    // Compatibility overload for Wallet.OnChangedMetal
-    private void OnWalletChanged(Metal metalType, long total)
+    // Corrected signature for Wallet.OnChangedMetal (Metal, ulong)
+    private void OnWalletChanged(Metal metalType, ulong total)
     {
         if (metalType == metal)
         {
