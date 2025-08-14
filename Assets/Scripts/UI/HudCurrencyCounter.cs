@@ -1,39 +1,47 @@
-﻿using UnityEngine;
-using TMPro;
-using IdleRPG.Core;
+using UnityEngine;
+using UnityEngine.UI;
+using IdleRPG.Core; // Added to access PlayerEconomy
 
-
-public class HUDCurrencyCounter : MonoBehaviour
+public class HudCurrencyCounter : MonoBehaviour
 {
-    [SerializeField] Metal metal = Metal.Copper;
-    [SerializeField] TMP_Text amountText;
+    [SerializeField] private Text label;
+    [SerializeField] private Metal metal; // still in use for inspector selection
 
-    void Start()           // ← subscribe here
+    private void OnEnable()
     {
-        PlayerEconomy.Instance.Wallet.OnChanged += OnWalletChanged;
-        Refresh();
+        if (PlayerEconomy.Instance != null && PlayerEconomy.Instance.Wallet != null)
+        {
+            // Subscribe to new string/ulong event
+            PlayerEconomy.Instance.Wallet.OnChanged += OnWalletChanged;
+            // Optional: subscribe to Metal/long if needed
+            PlayerEconomy.Instance.Wallet.OnChangedMetal += OnWalletChanged;
+        }
     }
 
-    void OnDestroy()       // ← always unsubscribe
+    private void OnDisable()
     {
-        if (PlayerEconomy.Instance)
+        if (PlayerEconomy.Instance != null && PlayerEconomy.Instance.Wallet != null)
+        {
             PlayerEconomy.Instance.Wallet.OnChanged -= OnWalletChanged;
+            PlayerEconomy.Instance.Wallet.OnChangedMetal -= OnWalletChanged;
+        }
     }
 
-    void OnWalletChanged(Metal m, ulong total)
+    // New signature for Wallet.OnChanged
+    private void OnWalletChanged(string metalKey, ulong total)
     {
-        if (m == metal) UpdateText(total);
+        if (metalKey.Equals(metal.ToString(), System.StringComparison.OrdinalIgnoreCase))
+        {
+            label.text = total.ToString();
+        }
     }
 
-    void Refresh() => UpdateText(PlayerEconomy.Instance.Wallet.Get(metal));
-
-    void UpdateText(ulong amt) => amountText.text = Format(amt);
-
-    static string Format(ulong v)
+    // Compatibility overload for Wallet.OnChangedMetal
+    private void OnWalletChanged(Metal metalType, long total)
     {
-        if (v >= 1_000_000_000UL) return (v / 1_000_000_000f).ToString("0.#") + " B";
-        if (v >= 1_000_000UL) return (v / 1_000_000f).ToString("0.#") + " M";
-        if (v >= 1_000UL) return (v / 1_000f).ToString("0.#") + " K";
-        return v.ToString();
+        if (metalType == metal)
+        {
+            label.text = total.ToString();
+        }
     }
 }
