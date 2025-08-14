@@ -5,6 +5,7 @@ namespace IdleRPG.Core
 {
     /// <summary>
     /// Minimal wallet used by services/UI. Stores totals per Metal and raises OnChanged on mutation.
+    /// Added string/ulong overloads for compatibility with existing code.
     /// </summary>
     public class Wallet
     {
@@ -43,6 +44,38 @@ namespace IdleRPG.Core
             {
                 OnChanged?.Invoke(m, 0L);
             }
+        }
+
+        // --- Compatibility overloads (string + ulong) ---
+
+        public long Get(string metalKey)
+        {
+            if (TryParseMetal(metalKey, out var m)) return Get(m);
+            return 0L;
+        }
+
+        public void Set(string metalKey, ulong total)
+        {
+            if (!TryParseMetal(metalKey, out var m)) return;
+            long cast = total > long.MaxValue ? long.MaxValue : (long)total;
+            Set(m, cast);
+        }
+
+        public void Add(string metalKey, ulong delta)
+        {
+            if (!TryParseMetal(metalKey, out var m)) return;
+            long cast = delta > long.MaxValue ? long.MaxValue : (long)delta;
+            Add(m, cast);
+        }
+
+        private static bool TryParseMetal(string key, out Metal metal)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                metal = default;
+                return false;
+            }
+            return Enum.TryParse(key, true, out metal);
         }
     }
 }
